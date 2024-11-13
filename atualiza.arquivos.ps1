@@ -12,6 +12,7 @@ Get-ChildItem -Path $basePath | ForEach-Object {
     $userName = $_.Name
     $userBasePath = "$($_.FullName)\Desktop\dw4\.vscode"
     $nodeModulesPath = "$($_.FullName)\Desktop\dw4\node_modules"
+    $nodeModulesPath = "\\?\" + $nodeModulesPath # https://stackoverflow.com/a/25781964
 
     # Verifica se o arquivo launch.json existe
     $launchFilePath = Join-Path -Path $userBasePath -ChildPath "launch.json"

@@ -1,4 +1,4 @@
-# URLs dos arquivos a serem baixados
+# URLs dos arquivos a serem baixados 
 $filesToDownload = @{
     "launch.json" = "https://raw.githubusercontent.com/pedrosiqueira/dw4/refs/heads/main/.vscode/launch.json"
     "tasks.json" = "https://raw.githubusercontent.com/pedrosiqueira/dw4/refs/heads/main/.vscode/tasks.json"
@@ -13,23 +13,38 @@ Get-ChildItem -Path $basePath | ForEach-Object {
     $userBasePath = "$($_.FullName)\Desktop\dw4\.vscode"
     $nodeModulesPath = "$($_.FullName)\Desktop\dw4\node_modules"
 
-    # Baixa e substitui os arquivos especificados
-    foreach ($file in $filesToDownload.Keys) {
-        $filePath = Join-Path -Path $userBasePath -ChildPath $file
-        $url = $filesToDownload[$file]
+    # Verifica se o arquivo launch.json existe
+    $launchFilePath = Join-Path -Path $userBasePath -ChildPath "launch.json"
+    
+    if (Test-Path $launchFilePath) {
+        # Se launch.json existe, tenta baixar e atualizar ambos os arquivos (launch.json e tasks.json)
         
-        # Verifica se o arquivo existe
-        if (Test-Path $filePath) {
+        # Baixa e substitui o arquivo launch.json
+        $launchUrl = $filesToDownload["launch.json"]
+        try {
+            Invoke-WebRequest -Uri $launchUrl -OutFile $launchFilePath -ErrorAction Stop
+            Write-Output "Arquivo launch.json atualizado para o usuário $userName"
+        }
+        catch {
+            Write-Output "Falha ao atualizar launch.json para o usuário ${userName}: $($_.Exception.Message)"
+        }
+
+        # Verifica se tasks.json já existe, caso contrário, cria e baixa
+        $tasksFilePath = Join-Path -Path $userBasePath -ChildPath "tasks.json"
+        if (-not (Test-Path $tasksFilePath)) {
+            $tasksUrl = $filesToDownload["tasks.json"]
             try {
-                Invoke-WebRequest -Uri $url -OutFile $filePath -ErrorAction Stop
-                Write-Output "Arquivo $file atualizado para o usuário $userName"
+                Invoke-WebRequest -Uri $tasksUrl -OutFile $tasksFilePath -ErrorAction Stop
+                Write-Output "Arquivo tasks.json criado e baixado para o usuário $userName"
             }
             catch {
-                Write-Output "Falha ao atualizar $file para o usuário ${userName}: $($_.Exception.Message)"
+                Write-Output "Falha ao criar e baixar tasks.json para o usuário ${userName}: $($_.Exception.Message)"
             }
         } else {
-            Write-Output "Arquivo $file não encontrado para o usuário $userName"
+            Write-Output "Arquivo tasks.json já existe para o usuário $userName"
         }
+    } else {
+        # Write-Output "Arquivo launch.json não encontrado para o usuário $userName. Não será baixado tasks.json."
     }
 
     # Verifica e exclui a pasta node_modules
@@ -42,6 +57,6 @@ Get-ChildItem -Path $basePath | ForEach-Object {
             Write-Output "Falha ao excluir node_modules para o usuário ${userName}: $($_.Exception.Message)"
         }
     } else {
-        Write-Output "Pasta node_modules não encontrada para o usuário $userName"
+        # Write-Output "Pasta node_modules não encontrada para o usuário $userName"
     }
 }
